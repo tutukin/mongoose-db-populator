@@ -1,0 +1,36 @@
+{
+  "name": "mongoose-db-populator",
+  "version": "0.0.1",
+  "description": "Populate db for integration testing using your mongoose models",
+  "main": "src/MongooseDbPopulator.js",
+  "scripts": {
+    "test": "grunt mochaTest"
+  },
+  "keywords": [
+    "mongoose",
+    "testing",
+    "integration",
+    "e2e",
+    "populate"
+  ],
+  "author": "Andrei V. Toutoukine <toutoukine@gmail.com> (https://www.npmjs.com/~tutukin)",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^2.1.1",
+    "grunt": "^0.4.5",
+    "grunt-contrib-jshint": "^0.11.0",
+    "grunt-contrib-watch": "^0.6.1",
+    "grunt-mocha-test": "^0.12.7",
+    "gruntfile-gtx": "^0.3.0",
+    "jshint-stylish": "^1.0.1",
+    "mocha": "^2.2.1",
+    "mongoose": "^3.8.24",
+    "proxyquire": "^1.4.0",
+    "require-directory": "^2.1.0",
+    "sinon": "^1.13.0",
+    "sinon-chai": "^2.7.0"
+  },
+  "dependencies": {
+    "async": "^0.9.0"
+  }
+}
