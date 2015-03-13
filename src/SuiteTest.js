@@ -9,19 +9,23 @@ describe('Suite', function () {
 
         this.mongoose = {
             modelNames: test.sinon.stub().returns([]),
-            model:      test.sinon.stub()
+            model:      test.sinon.stub(),
+            connection: {
+                readyState: 0,
+                on:         test.sinon.stub()
+            }
         };
 
         this.Suite = test.proxyMod('Suite', {
-            async:      this.async,
-            mongoose:   this.mongoose
+            async:      this.async
         });
 
         this.sn = 'suite name';
 
         this.populator = {
             model:      test.sinon.stub(),
-            suite:      test.sinon.stub()
+            suite:      test.sinon.stub(),
+            mongoose:   test.sinon.stub().returns(this.mongoose)
         };
 
         this.suite = new this.Suite(this.sn, this.populator);
@@ -163,19 +167,76 @@ describe('Suite', function () {
 
 
     describe('#build(done)', function () {
+
+        it('should be an instance methos', function () {
+            expect(this.Suite).to.respondTo('build')
+        });
+
+        describe('when mongoose is connected', function () {
+            beforeEach( function () {
+                this.suite._build = test.sinon.spy();
+                this.mongoose.connection.readyState = 1;
+            });
+
+            it('should immediately call #_build', function () {
+                var done = test.sinon.spy();
+                this.suite.build(done);
+
+                expect(this.suite._build).calledOnce
+                    .and.calledWithExactly(done);
+            });
+        });
+
+
+        describe('when mongoose is not connected', function () {
+            beforeEach( function () {
+                this.suite._build = test.sinon.spy();
+                this.mongoose.connection.readyState = 0;
+            });
+
+            it('should not call #_build immediately', function () {
+                var done = test.sinon.spy();
+                this.suite.build(done);
+                expect(this.suite._build).not.called;
+            });
+
+            it('should attach a listener to connection "connected" event', function () {
+                var done = test.sinon.spy();
+                this.suite.build(done);
+
+                expect(this.mongoose.connection.on).calledOnce
+                    .and.calledWithExactly('connected', test.sinon.match.func);
+            });
+
+            it('should call #_build() on "connected" event', function () {
+                var done = test.sinon.spy();
+                this.mongoose.connection.on.yields(null);
+
+                this.suite.build(done);
+
+                expect(this.suite._build).calledOnce
+                    .and.calledWithExactly(done);
+            });
+
+        });
+    });
+
+
+
+    describe('#_build(done)', function () {
         beforeEach( function () {
             this.suiteFactory = test.sinon.spy();
             this.populator.suite.withArgs(this.sn).returns(this.suiteFactory);
         });
 
         it('should be an instance method', function () {
-            expect(this.Suite).to.respondTo('build');
+            expect(this.Suite).to.respondTo('_build');
         });
 
         it('should call suiteFactory bound to self', function () {
             var done = test.sinon.spy();
 
-            this.suite.build(done);
+            this.suite._build(done);
 
             expect(this.suiteFactory).calledOnce
                 .and.calledOn(this.suite);
@@ -202,7 +263,7 @@ describe('Suite', function () {
             this.suite.create(modelName, {});
             this.suite.create(modelName, {});
 
-            this.suite.build(done);
+            this.suite._build(done);
 
             expect(this.async.waterfall).calledOnce;
             var tasks = this.async.waterfall.firstCall.args[0];
@@ -216,7 +277,7 @@ describe('Suite', function () {
             var done = test.sinon.spy();
             this.async.waterfall.yields(err);
 
-            this.suite.build(done);
+            this.suite._build(done);
 
             expect(done).calledOnce
                 .and.calledWithExactly(err);
@@ -239,7 +300,7 @@ describe('Suite', function () {
             this.suite._wrapTask.withArgs(A, 'remove').returns(task1);
             this.suite._wrapTask.withArgs(B, 'remove').returns(task2);
 
-            this.suite.build(done);
+            this.suite._build(done);
             var tasks = this.async.waterfall.firstCall.args[0];
 
             expect(tasks).to.include(task1);

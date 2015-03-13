@@ -1,13 +1,21 @@
 var Suite = require('./Suite');
 
-function MDP () {
+function MDP (mongoose) {
     this._factory = {
         model:    {},
         suite:    {}
     };
+
+    this._mongoose = mongoose;
 }
 
 var p = MDP.prototype;
+
+
+p.mongoose = function mongoose () {
+    return this._mongoose;
+};
+
 
 p.factory = function factory (type, name, factory) {
     var _this = this;

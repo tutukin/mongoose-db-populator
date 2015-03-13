@@ -1,19 +1,9 @@
 var async = require('async');
 
-try {
-    var mongoose = require('mongoose');
-}
-catch (e) {
-    console.error('mongoose-db-populator unable to load mongoose module');
-    console.error('note: this is your responsibility to define models and connect to db!')
-    throw Error('mongoose-db-populator unable to load mongoose');
-}
-
-
-
 var Suite = module.exports = function Suite (suiteName, populator) {
     this._name = suiteName;
     this._populator = populator;
+    this._mongoose = populator.mongoose();
 
     this.docs = {};
 };
@@ -37,7 +27,23 @@ p.create = function create (modelName, options) {
     return doc;
 };
 
+
+
+
 p.build = function build (done) {
+    var _this = this;
+    if ( this._mongoose.connection.readyState === 1 ) {
+        return this._build(done);
+    }
+
+    this._mongoose.connection.on('connected', function () {
+        _this._build(done);
+    });
+
+
+};
+
+p._build = function build (done) {
     var _this = this;
 
     var suiteFactory = this._populator.suite(this.name());
@@ -45,8 +51,8 @@ p.build = function build (done) {
 
     var tasks = [];
 
-    mongoose.modelNames().forEach(function (mn) {
-        tasks.push( _this._wrapTask(mongoose.model(mn), 'remove') );
+    this._mongoose.modelNames().forEach(function (mn) {
+        tasks.push( _this._wrapTask(_this._mongoose.model(mn), 'remove') );
     });
 
     Object.keys(this.docs).forEach( function (modelName) {

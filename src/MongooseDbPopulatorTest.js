@@ -1,7 +1,7 @@
 var test = require('../test/support');
 var expect = test.chai.expect;
 
-describe('MongooseDbPopulator', function () {
+describe('MongooseDbPopulator(mongoose)', function () {
     beforeEach( function () {
         this.Suite = test.sinon.stub();
         this.suite = {
@@ -12,11 +12,21 @@ describe('MongooseDbPopulator', function () {
             './Suite': this.Suite
         });
 
-        this.mdp = new this.MDP();
+        this.mongoose = {};
+
+        this.mdp = new this.MDP(this.mongoose);
     });
 
     it('should be a function', function () {
         expect(this.MDP).to.be.a('function');
+    });
+
+
+    describe('#mongoose()', function () {
+        it('should be an instance method and return a mongoose instance', function () {
+            expect(this.MDP).to.respondTo('mongoose');
+            expect(this.mdp.mongoose()).to.equal(this.mongoose);
+        });
     });
 
 
