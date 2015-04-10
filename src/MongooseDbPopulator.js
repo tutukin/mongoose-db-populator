@@ -1,3 +1,5 @@
+var util = require('util');
+var F = util.format;
 var Suite = require('./Suite');
 
 function MDP (mongoose) {
@@ -19,6 +21,7 @@ p.mongoose = function mongoose () {
 
 p.factory = function factory (type, name, factory) {
     var _this = this;
+    var f;
 
     if (typeof name === 'object') {
         Object.keys(name).forEach(function (mn) {
@@ -32,7 +35,13 @@ p.factory = function factory (type, name, factory) {
         _this._factory[type][name] = factory;
     }
 
-    return _this._factory[type][name];
+    f = _this._factory[type][name];
+
+    if ( ! f ) {
+        throw Error(F('%s %s is not defined', name, type));
+    }
+
+    return f;
 };
 
 p.suite = function suite (suiteName, suiteFactory) {
@@ -43,10 +52,16 @@ p.model = function model (modelName, modelFactory) {
     return this.factory('model', modelName, modelFactory);
 };
 
-p.populate = function populate (suiteName, done) {
+p.populate = function populate (suiteName, options, done) {
+
+    if ( typeof done === 'undefined' && typeof options === 'function' ) {
+        done = options;
+        options = {};
+    }
+
     var suiteFactory = this.suite(suiteName);
     var suite = new Suite(suiteName, this);
-    suite.build(done);
+    suite.build(options, done);
     return suite;
 };
 

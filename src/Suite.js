@@ -30,24 +30,34 @@ p.create = function create (modelName, options) {
 
 
 
-p.build = function build (done) {
+p.build = function build (options, done) {
+    if ( typeof done === 'undefined' && typeof options === 'function' ) {
+        done = options;
+        options = {};
+    }
+
     var _this = this;
     if ( this._mongoose.connection.readyState === 1 ) {
-        return this._build(done);
+        return this._build(options, done);
     }
 
     this._mongoose.connection.on('connected', function () {
-        _this._build(done);
+        _this._build(options, done);
     });
 
 
 };
 
-p._build = function build (done) {
+p._build = function build (options, done) {
     var _this = this;
 
+    if ( typeof done === 'undefined' && typeof options === 'function' ) {
+        done = options;
+        options = {};
+    }
+
     var suiteFactory = this._populator.suite(this.name());
-    suiteFactory.call(this);
+    suiteFactory.call(this, options);
 
     var tasks = [];
 
@@ -71,8 +81,16 @@ p.getFirst = function getFirst (modelName) {
     return this.docs[modelName][0];
 };
 
-p.getRandom = function getRandom (modelName) {
+p.getDocs = function getDocs (modelName) {
     var docs = this.docs[modelName];
+    if ( ! docs ) {
+        throw Error('Create some docs using model "' + modelName + '" first')
+    }
+    return docs;
+};
+
+p.getRandom = function getRandom (modelName) {
+    var docs = this.getDocs(modelName);
     var index = this._getRandomIndex(docs.length);
     return docs[index];
 };
@@ -81,7 +99,7 @@ p.find = function find (modelName, conditions, options) {
     options = options || {};
     conditions = conditions || {};
     var res = [];
-    var docs = this.docs[modelName];
+    var docs = this.getDocs(modelName);
 
     var i = docs.length - 1;
     for ( ; i >= 0; i-- ) {

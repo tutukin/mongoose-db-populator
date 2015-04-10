@@ -35,11 +35,14 @@ describe('Suite', function () {
         expect(this.Suite).to.be.a('function');
     });
 
+
+
     describe('#name()', function () {
         it('should return suiteName', function () {
             expect(this.suite.name()).equals(this.sn);
         });
     });
+
 
 
     describe('#create(modelName, options)', function () {
@@ -59,6 +62,39 @@ describe('Suite', function () {
 
             expect(modelFactory).calledOnce.and.calledWithExactly(options);
             expect(res).equals(doc);
+        });
+    });
+
+
+
+
+
+    describe('#getDocs(modelName)', function () {
+        it('should be an instance method', function () {
+            expect(this.Suite).to.respondTo('getDocs');
+        });
+
+        it('should return docs for given model name', function () {
+            var modelName = 'a model name';
+            var doc1 = {a: 'mongoose document', n: 1};
+            var doc2 = {a: 'mongoose document', n: 2};
+
+            var modelFactory = test.sinon.stub();
+            modelFactory.onCall(0).returns(doc1);
+            modelFactory.onCall(1).returns(doc2);
+            this.populator.model.withArgs(modelName).returns(modelFactory);
+
+            this.suite.create(modelName, {});
+            this.suite.create(modelName, {});
+
+            expect(this.suite.getDocs(modelName)).to.deep.equal([doc1, doc2]);
+        });
+
+        it('should throw if model is unknown', function () {
+            var suite = this.suite;
+            expect( function () {
+                suite.getDocs('AbraCadabra');
+            }).to.throw('Create some docs');
         });
     });
 
@@ -89,6 +125,8 @@ describe('Suite', function () {
     });
 
 
+
+
     describe('#getRandom(modelName)', function () {
         it('should be an instance method', function () {
             expect(this.Suite).to.respondTo('getRandom');
@@ -111,6 +149,8 @@ describe('Suite', function () {
             expect(this.suite.getRandom(modelName)).to.equal(doc);
         });
     });
+
+
 
 
     describe('#find(modelName, conditions, options)', function () {
@@ -166,7 +206,8 @@ describe('Suite', function () {
 
 
 
-    describe('#build(done)', function () {
+
+    describe('#build([options,] done)', function () {
 
         it('should be an instance methos', function () {
             expect(this.Suite).to.respondTo('build')
@@ -180,10 +221,12 @@ describe('Suite', function () {
 
             it('should immediately call #_build', function () {
                 var done = test.sinon.spy();
-                this.suite.build(done);
+                var options = {an: 'option'};
+
+                this.suite.build(options, done);
 
                 expect(this.suite._build).calledOnce
-                    .and.calledWithExactly(done);
+                    .and.calledWithExactly(options, done);
             });
         });
 
@@ -215,7 +258,7 @@ describe('Suite', function () {
                 this.suite.build(done);
 
                 expect(this.suite._build).calledOnce
-                    .and.calledWithExactly(done);
+                    .and.calledWithExactly({}, done);
             });
 
         });
@@ -223,7 +266,7 @@ describe('Suite', function () {
 
 
 
-    describe('#_build(done)', function () {
+    describe('#_build([options,] done)', function () {
         beforeEach( function () {
             this.suiteFactory = test.sinon.spy();
             this.populator.suite.withArgs(this.sn).returns(this.suiteFactory);
@@ -233,13 +276,15 @@ describe('Suite', function () {
             expect(this.Suite).to.respondTo('_build');
         });
 
-        it('should call suiteFactory bound to self', function () {
+        it('should call suiteFactory bound to self and pass options', function () {
             var done = test.sinon.spy();
+            var options = {an: 'option'};
 
-            this.suite._build(done);
+            this.suite._build(options, done);
 
             expect(this.suiteFactory).calledOnce
-                .and.calledOn(this.suite);
+                .and.calledOn(this.suite)
+                .and.calledWithExactly(options);
 
         });
 

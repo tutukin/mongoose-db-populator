@@ -57,6 +57,14 @@ describe('MongooseDbPopulator(mongoose)', function () {
             expect(res).equals(factory);
         });
 
+        it('should throw error on attempt to retrieve undefined factory', function () {
+            var mdp = this.mdp;
+
+            expect( function () {
+                mdp.factory('suite', 'thatsNotDefined');
+            }).to.throw(/suite.*not defined/i);
+        });
+
         describe('#factory(type, factoryHash)', function () {
             beforeEach( function () {
                 this.factoryHash = {
@@ -127,7 +135,7 @@ describe('MongooseDbPopulator(mongoose)', function () {
 
 
 
-    describe('#populate(suiteName, done)', function () {
+    describe('#populate(suiteName, [options,] done)', function () {
         beforeEach( function () {
             this.sn = 'suite name';
             this.sf = test.sinon.spy();
@@ -135,6 +143,7 @@ describe('MongooseDbPopulator(mongoose)', function () {
             this.Suite.returns(this.suite);
             this.mdp.suite(this.sn, this.sf);
         });
+
         it('should be an instance method', function () {
             expect(this.MDP).to.respondTo('populate');
         });
@@ -152,10 +161,19 @@ describe('MongooseDbPopulator(mongoose)', function () {
             expect(suite).to.exist.and.equal(this.suite);
         });
 
-        it('should call suite.build(done)', function () {
+        it('should call suite.build({}, done)', function () {
             var suite = this.mdp.populate(this.sn, this.done);
             expect(this.suite.build).calledOnce
-                .and.calledWithExactly(this.done);
+                .and.calledWithExactly({}, this.done);
+        });
+
+        it('should pass options to build if provided', function () {
+            var options = {an: 'option'};
+
+            var suite = this.mdp.populate(this.sn, options, this.done);
+
+            expect(this.suite.build).calledOnce
+                .and.calledWithExactly(options, this.done);
         });
     });
 
